@@ -1,0 +1,15 @@
+AF  -43.386  21.136   0.1987    Africa							
+AN  -47.339  74.514   0.2024    Antarctica							
+AR  2.951    23.175   0.5083    Arabia							
+AU  -0.091   44.482   0.7467    Australia							
+CA  -73.212  25.925   0.2827    Caribbean							
+CO  13.171   -116.997 1.1621    Cocos							
+EU  -61.901  73.474   0.2047    Eurasia							
+IN  3.069    26.467   0.5211    India							
+JF  -39.211  61.633   1.0122    Juan da Fuca							
+NZ  35.879   -90.913  0.3231    Nazca							
+NA  -74.705  13.400   0.3835    North America							
+PA  -61.467  90.326   1.0613    Pacific							
+PS  -53.88   -16.668  1.1543    Philippine							
+SC  -76.912  52.228   0.4451    Scotia							
+SA  -70.583  80.401   0.4358    South America							
