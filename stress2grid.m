@@ -1,3 +1,4 @@
+%% Stress2Grid v1.1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % These scripts/data are freely available under a Creative Commons Attribution 4.0     % 
 % International (CC-BY 4.0) Licence. When using the scripts/data please cite them as:  %
@@ -7,12 +8,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear all; close all
-addpath('routines') % The path to the auxilliary files
+addpath('routines') % The path to the auxiliary files
+addpath('data') % Path to the data files
 % Input variables
 % In this section all input variables which are required can be altered.
 
 % Input files and settings
-input = 'wsm2016.xls'; % The WSM database (.*xls - File, NO xlsx)
+%input_xls = 'wsm2016.xlsx'; % The WSM database (*.xlsx - File)
+input_csv= 'wsm2016.csv'; % The WSM database (*.csv -File)
 
 plate_boundaries = 'plates_Bird_2002_stress2grid.dat'; % Provide the file of the plate boundaries
 euler_poles = 'HS3_NUVEL1A.txt'; % Provide the file for the Euler poles for the different plates
@@ -22,16 +25,16 @@ polygon_exclude = 'no'; % If you want to exclude the evaluation for a specific p
 exclude_poly = 'PB2002_orogens.txt'; % Provide a file with a polygon from which you want to exclude all data.
 
 % Grid parameters
-gridsize = 0.5;             % gridsize in degree
-west = 173.5;                 % minimum and Maximum Lat and Lon
-east =175;
-south = -40; 
-north = -38.5; 
+gridsize = 2.5;             % gridsize in degree
+west = 90;                 % minimum and Maximum Lat and Lon
+east = 140;
+south = 10; 
+north = 60; 
 
 % Data processing
 % WSM-Quality weighting
 %         A      B     C    D  E
-qual = [ 1/15, 1/20, 1/25, 0, 0 ];
+qual = [ 1/15, 1/20, 1/25, 1/40, 0 ];
 apply_qw = 'yes'; % If a quality weighting should be applied: 'yes'
 
 % WSM method weighting (from 0 to 5)
@@ -40,7 +43,7 @@ methd = [ 4, 5, 5, 5,  4, 5, 4, 2, 1 ];
 apply_mw = 'no'; % If a method weighting should be applied: 'yes'
 m_exclude = {}; % Certain stress indicators can be completely removed from the analysis.
 
-pbe_exclude = 'yes'; % Exclude PBE-flagged events from the algorithm.
+pbe_exclude = 'no'; % Exclude PBE-flagged events from the algorithm.
 pb_dist_exclude = 0; % Exclude data records in a given distance from the next plate boundary.
 
 dist_weight = 'linear';    % method of distance weighting (linear, inverse, or none)
@@ -75,19 +78,47 @@ num_r = length(R_range);
 
 h = waitbar(0,'Loading and rating input data...');
 
-[~, ~, alldata] = xlsread(input);
-alldata(1,:) = [];
+exls = exist('input_xls','var');
+ecsv = exist('input_csv','var');
 
-lat_data0 = cell2mat(alldata(:,3));
-lon_data0 = cell2mat(alldata(:,4));
-orient_data0 = cell2mat(alldata(:,5));
-method = alldata(:,6);
-depth_data = cell2mat(alldata(:,7));
-quality = alldata(:,8);
-regime = alldata(:,9);
-plate = alldata(:,55);
-pbe = alldata(:,58);
-pb_dist = cell2mat(alldata(:,57));
+% Load stress data according to specified input
+if exls > 0
+    [~, ~, alldata] = xlsread(input_xls);
+    alldata(1,:) = [];
+
+    lat_data0 = round(cell2mat(alldata(:,3)),3);
+    lon_data0 = round(cell2mat(alldata(:,4)),3);
+    orient_data0 = round(cell2mat(alldata(:,5)));
+    method = alldata(:,6);
+    depth_data = round(cell2mat(alldata(:,7)),3);
+    quality = alldata(:,8);
+    regime = alldata(:,9);
+    plate = alldata(:,55);
+    pbe = alldata(:,58);
+    pb_dist = round(cell2mat(alldata(:,57)),2);
+    
+elseif ecsv > 0
+    fileID = fopen(input_csv);
+    wsmformat = ('%*s %*s %.6f %.6f %f %s %.2f %s %s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %s %*s %f %s %*[^\n]');
+    alldata = textscan(fileID,wsmformat,'HeaderLines',1,'Delimiter',',');
+    fclose(fileID);
+
+    lat_data0 = round(alldata{:,1},3);
+    lon_data0 = round(alldata{:,2},3);
+    orient_data0 = round(alldata{:,3});
+    method = alldata{:,4};
+    depth_data = round(alldata{:,5},3);
+    quality = alldata{:,6};
+    regime = alldata{:,7};
+    plate = alldata{:,8};
+    pb_dist = round(alldata{:,9},2);
+    pbe = alldata{:,10};
+    
+else
+    disp(' ')
+    disp('No input file specified.')
+    return
+end
 
 % Check input data
 [ec, se] = check_input(lat_data0,lon_data0,orient_data0,method,depth_data,quality,plate,...
@@ -312,17 +343,17 @@ for i = 1:length(name)
     in = inpolygon(XG,YG,Poly(:,1),Poly(:,2));
     k = find(in == 1);
     
-    if isequal(cellstr('NY'),name(i,:))
+    if isequal('NY',name(i,:))
         Plate_G(k,:) = cellstr('NA');
-    elseif isequal(cellstr('PB'),name(i,:))
+    elseif isequal('PB',name(i,:))
         Plate_G(k,:) = cellstr('PA');
-    elseif isequal(cellstr('PC'),name(i,:))
+    elseif isequal('PC',name(i,:))
         Plate_G(k,:) = cellstr('PA');
-    elseif isequal(cellstr('KF'),name(i,:))
+    elseif isequal('KF',name(i,:))
         Plate_G(k,:) = cellstr('KE');
-    elseif isequal(cellstr('BW'),name(i,:))
+    elseif isequal('BW',name(i,:))
         Plate_G(k,:) = cellstr('BR');
-    elseif isequal(cellstr('AV'),name(i,:))
+    elseif isequal('AV',name(i,:))
         Plate_G(k,:) = cellstr('AU');
     else
         Plate_G(k,:) = cellstr(name(i,:));
@@ -501,8 +532,8 @@ for i = 1:n_G
         
         % GMT Output
         if s0 < threshold % get homogeneous stress
-            gmt_coord(i,:) = num2cell([ YG(i), XG(i), s0, R_search ]);
-            gmt_mazi(i,:) = num2cell([ YG(i), XG(i), meanSH ]);
+            gmt_coord(i,:) = num2cell([ XG(i), YG(i), s0, R_search ]);
+            gmt_mazi(i,:) = num2cell([ XG(i), YG(i), meanSH ]);
             if isequal(compare_pm,'yes')
                 if apm(i) ~= -999
                     gmt_shpm(i) = num2cell(meanSH - apm(i));
@@ -510,7 +541,7 @@ for i = 1:n_G
             end
 
         elseif R_search == min(R_range)
-            gmt_coord(i,:) = num2cell([ YG(i), XG(i), s0, R_search ]);
+            gmt_coord(i,:) = num2cell([ XG(i), YG(i), s0, R_search ]);
         end
     end
     
@@ -530,12 +561,12 @@ if isequal(plot_output,'yes')
 
 size = 50; % Size of the coloured areas
 
-YA = cell2mat(gmt_mazi(:,1));
-XA = cell2mat(gmt_mazi(:,2));
+YA = cell2mat(gmt_mazi(:,2));
+XA = cell2mat(gmt_mazi(:,1));
 azi = cell2mat(gmt_mazi(:,3));
 
-Y = cell2mat(gmt_coord(:,1));
-X = cell2mat(gmt_coord(:,2));
+Y = cell2mat(gmt_coord(:,2));
+X = cell2mat(gmt_coord(:,1));
 rad = cell2mat(gmt_coord(:,4));
 var = cell2mat(gmt_coord(:,3));
 
@@ -603,12 +634,12 @@ subplot(2,3,5);
     hold on
     scatter(X,Y,size,var,'s','filled');
     cb2 = colorbar('northoutside');
-    xlabel(cb2,'Variance [Degree]');
+    xlabel(cb2,'Standard Deviation [Degree]');
     plot(long,lat,'k');
     axis([west east south north]);
     hold off
 
-if isequal(compare_pm,'yes');
+if isequal(compare_pm,'yes')
 subplot(2,3,6);
     load coast;
     hold on
@@ -630,7 +661,7 @@ clear XA YA X Y XP YP XS YS azi var rad shpm cb...
 % This section is dedicated to the nameing, labeling, and export of the data.
 % Excel Output
 if isequal(output,'both') || isequal(output,'excel')
-    outputfile = num2cell([YG,XG]);
+    outputfile = num2cell([XG,YG]);
     row1 = cat(2,cellstr(['LAT']),cellstr(['LON']));
     
     if isequal(compare_pm,'yes') || isequal(plate_affil,'yes')
@@ -687,19 +718,19 @@ if isequal(output,'both') || isequal(output,'gmt')
     end
     fclose(fid);
     
-    % Variance:
-    vari = [ cell2mat(gmt_coord(:,1)), cell2mat(gmt_coord(:,2)), cell2mat(gmt_coord(:,3)) ];
+    % Standard Deviation:
+    std = [ cell2mat(gmt_coord(:,1)), cell2mat(gmt_coord(:,2)), cell2mat(gmt_coord(:,3)) ];
     
-    fid = fopen('variance.dat','w');
-    for i = 1:length(vari)
-        fprintf(fid,'%2.3f %3.3f %4d\n',vari(i,:));
+    fid = fopen('std.dat','w');
+    for i = 1:length(std)
+        fprintf(fid,'%2.3f %3.3f %4d\n',std(i,:));
     end
     fclose(fid);
     
     
     if isequal(compare_pm,'yes')
         % APM:
-        Abspm = [ YG, XG, apm' ];
+        Abspm = [ XG, YG, apm' ];
         plate_abs = char(Plate_G);
         k = find(Abspm(:,3) == -999);
         Abspm(k,:) = [];
@@ -714,7 +745,7 @@ if isequal(output,'both') || isequal(output,'gmt')
         fclose(fid);
         
         % SHmax - APM:
-        grid = [ YG, XG ];
+        grid = [ XG, YG ];
         plate_shab = char(Plate_G);
         k = find(cellfun(@isempty,gmt_shpm));
         grid(k,:) = [];
