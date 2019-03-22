@@ -6,17 +6,17 @@
 
 Documentation and usage examples are available online at:
 
-Ziegler, M. O. and Heidbach, O.(2017). Manual of the Matlab Script Stress2Grid. World Stress Map Technical Report 17-02, GFZ German Research Centre for Geosciences.
-DOI: http://doi.org/10.2312/wsm.2017.002 [![DOI](https://img.shields.io/badge/DOI-10.2312%2Fwsm.2017.002-blue.svg)](http://doi.org/10.2312/wsm.2017.002)
+Ziegler, M. O. and Heidbach, O.(2019). Manual of the Matlab Script Stress2Grid v1.1. World Stress Map Technical Report 19-02, GFZ German Research Centre for Geosciences.
+DOI: http://doi.org/10.2312/wsm.2019.002 [![DOI](https://img.shields.io/badge/DOI-10.2312%2Fwsm.2019.002-blue.svg)](http://doi.org/10.2312/wsm.2019.002)
 
 ## Citation
-The recommended citation for FAST Calibration is: (You can find the BibTeX snippet in the
+The recommended citation for Stress2Grid is: (You can find the BibTeX snippet in the
 [`CITATION` file](CITATION.bib)):
 
-> Ziegler, M. O. and Heidbach, O. (2017). Matlab Script Stress2Grid. GFZ Data Services. DOI: http://doi.org/10.5880/wsm.2017.002  
+> Ziegler, M. O. and Heidbach, O. (2019). Matlab Script Stress2Grid v1.1. GFZ Data Services. DOI: http://doi.org/10.5880/wsm.2019.002  
 
 
-[![DOI](https://img.shields.io/badge/DOI-10.5880%2Fwsm.2017.002-blue.svg)](http://doi.org/10.5880/wsm.2017.002)
+[![DOI](https://img.shields.io/badge/DOI-10.5880%2Fwsm.2019.002-blue.svg)](http://doi.org/10.5880/wsm.2019.002)
 
 ## License 
 GNU General Public License, Version 3, 29 June 2007
