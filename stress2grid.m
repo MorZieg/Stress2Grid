@@ -1,4 +1,4 @@
-%% Stress2Grid v1.1
+%% Stress2Grid v1.2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % These scripts/data are freely available under a Creative Commons Attribution 4.0     % 
 % International (CC-BY 4.0) Licence. When using the scripts/data please cite them as:  %
@@ -21,15 +21,15 @@ plate_boundaries = 'plates_Bird_2002_stress2grid.dat'; % Provide the file of the
 euler_poles = 'HS3_NUVEL1A.txt'; % Provide the file for the Euler poles for the different plates
 num_plates = 15; % The number of plates with Euler poles
 
-polygon_exclude = 'no'; % If you want to exclude the evaluation for a specific polygon.
+polygon_exclude = 'yes'; % If you want to exclude the evaluation for a specific polygon.
 exclude_poly = 'PB2002_orogens.txt'; % Provide a file with a polygon from which you want to exclude all data.
 
 % Grid parameters
-gridsize = 2.5;             % gridsize in degree
-west = 90;                 % minimum and Maximum Lat and Lon
-east = 140;
-south = 10; 
-north = 60; 
+gridsize = 2;             % gridsize in degree
+west = 0;                 % minimum and Maximum Lat and Lon
+east = 20;
+south = 40; 
+north = 54; 
 
 % Data processing
 % WSM-Quality weighting
@@ -40,10 +40,10 @@ apply_qw = 'yes'; % If a quality weighting should be applied: 'yes'
 % WSM method weighting (from 0 to 5)
 %       FMS FMF BO DIF HF GF GV OC, rest
 methd = [ 4, 5, 5, 5,  4, 5, 4, 2, 1 ];
-apply_mw = 'no'; % If a method weighting should be applied: 'yes'
+apply_mw = 'yes'; % If a method weighting should be applied: 'yes'
 m_exclude = {}; % Certain stress indicators can be completely removed from the analysis.
 
-pbe_exclude = 'no'; % Exclude PBE-flagged events from the algorithm.
+pbe_exclude = 'yes'; % Exclude PBE-flagged events from the algorithm.
 pb_dist_exclude = 0; % Exclude data records in a given distance from the next plate boundary.
 
 dist_weight = 'linear';    % method of distance weighting (linear, inverse, or none)
@@ -58,7 +58,7 @@ arte_thres = 200; % Maximum distance (in km) of the gridpoint to the next datapo
 compare_pm = 'yes'; % Set to 'yes' if plate motion should be compared.
 
 % Output
-output = 'gmt'; % Define output type: excel, gmt or both.
+output = 'both'; % Define output type: excel, gmt or both.
 arrowlength = 0.1 ; % Define arrowlength for GMT.
 
 % Plots:
@@ -418,18 +418,18 @@ if k > 0
     dver  = 0.0001 * ( vx * sin(blat(i)) * cos(blong(i)) + vy * sin(blat(i)) * sin(blong(i)) + vz * cos(blat(i)));
     dver  = abs(dver);
 
-    length = sqrt(dnord^2 + deast^2);
+    leng = sqrt(dnord^2 + deast^2);
     
     if (dnord^2 + deast^2) == 0
         apm(i) = 0;    
     elseif (dnord >= 0 && deast >= 0)
-        apm(i) = (1/deg2rad) * asin(deast/length);
+        apm(i) = (1/deg2rad) * asin(deast/leng);
     elseif (dnord <  0 && deast >= 0)
-        apm(i) = 90 + abs((1/deg2rad) * asin(dnord/length));
+        apm(i) = 90 + abs((1/deg2rad) * asin(dnord/leng));
     elseif (dnord <  0 && deast < 0)
-        apm(i) = abs((1/deg2rad) * asin(deast/length));
+        apm(i) = abs((1/deg2rad) * asin(deast/leng));
     elseif (dnord >= 0 && deast < 0)
-        apm(i) = 180.0 - abs((1/deg2rad) * asin(deast/length));
+        apm(i) = 180.0 - abs((1/deg2rad) * asin(deast/leng));
     end
 
 else
@@ -445,7 +445,7 @@ disp(' ')
 
 end
 
-clear blat blong *cord b_* w1 w2 w3 dver length dnord deast vx vy...
+clear blat blong *cord b_* w1 w2 w3 dver leng dnord deast vx vy...
     vz k i fid ep euler_poles R_earth euler_plate tline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Computation of the mean SHmax orientation
@@ -559,6 +559,7 @@ clear dist_threshold_scal i sum* array_* meansin* meancos*...
 % Plot output data
 if isequal(plot_output,'yes')
 
+load coastlines;
 size = 50; % Size of the coloured areas
 
 YA = cell2mat(gmt_mazi(:,2));
@@ -590,63 +591,56 @@ end
 
 
 subplot(2,3,1)
-    load coast;
-    plot(long,lat,'k');
+    plot(coastlon,coastlat,'k');
     hold on
-    quiver(init_1,init_2,sin(init_orient*deg2rad),cos(init_orient*deg2rad),'b');
-    scatter(init_1,init_2)
+    quiver(init_1,init_2,sin(init_orient*deg2rad),cos(init_orient*deg2rad),'k','ShowArrowHead','off');
     axis([west east south north]);
     title('Input data')
     hold off
 
 subplot(2,3,2)
-    load coast;
     hold on
-    quiver(XA,YA,sin(azi*deg2rad),cos(azi*deg2rad),'k');
-    plot(long,lat,'k');
+    quiver(XA,YA,sin(azi*deg2rad),cos(azi*deg2rad),'k','ShowArrowHead','off');
+    plot(coastlon,coastlat,'k');
     axis([west east south north]);
     title('Mean S_{Hmax} Azimuth')
     hold off
 
 if isequal(compare_pm,'yes')
 subplot(2,3,3)
-    load coast;
     hold on
-    quiver(XP,YP,sin(apmn'*deg2rad),cos(apmn'*deg2rad),'k');
-    plot(long,lat,'k');
+    quiver(XP,YP,sin(apmn'*deg2rad),cos(apmn'*deg2rad),'k','ShowArrowHead','off');
+    plot(coastlon,coastlat,'k');
     axis([west east south north]);
     title('Absolut plate motion')
     hold off
 end
 
 subplot(2,3,4);
-    load coast;
     hold on
     scatter(X,Y,size,rad,'s','filled');
     cb1 = colorbar('northoutside');
     xlabel(cb1,'Search radius [km]');
-    plot(long,lat,'k');
+    plot(coastlon,coastlat,'k');
     axis([west east south north]);
     hold off
 
 subplot(2,3,5);
-    load coast;
     hold on
     scatter(X,Y,size,var,'s','filled');
     cb2 = colorbar('northoutside');
     xlabel(cb2,'Standard Deviation [Degree]');
-    plot(long,lat,'k');
+    plot(coastlon,coastlat,'k');
     axis([west east south north]);
     hold off
 
 if isequal(compare_pm,'yes')
 subplot(2,3,6);
-    load coast;
     hold on
     scatter(XS,YS,size,shpm,'s','filled');
     cb3 = colorbar('northoutside');
     xlabel(cb3,'mean S_{Hmax} - Plate motion [Degree]');
-    plot(long,lat,'k');
+    plot(coastlon,coastlat,'k');
     axis([west east south north]);
     hold off
 end
@@ -703,7 +697,7 @@ if isequal(output,'both') || isequal(output,'gmt')
     mazi = [ cell2mat(gmt_mazi(:,1)), cell2mat(gmt_mazi(:,2)), cell2mat(gmt_mazi(:,3)), len ];
     
     fid = fopen('mean_azi.dat','w');
-    for i = 1:length(mazi)
+    for i = 1:length(mazi(:,1))
         fprintf(fid,'%2.3f %3.3f %3.2f %1.1f\n',mazi(i,:));
     end
     fclose(fid);
@@ -713,7 +707,7 @@ if isequal(output,'both') || isequal(output,'gmt')
     grire = [ cell2mat(gmt_coord(:,1)), cell2mat(gmt_coord(:,2)), cell2mat(gmt_coord(:,4)) ];
     
     fid = fopen('wavelength.dat','w');
-    for i = 1:length(grire)
+    for i = 1:length(grire(:,1))
         fprintf(fid,'%2.3f %3.3f %4d\n',grire(i,:));
     end
     fclose(fid);
@@ -722,7 +716,7 @@ if isequal(output,'both') || isequal(output,'gmt')
     std = [ cell2mat(gmt_coord(:,1)), cell2mat(gmt_coord(:,2)), cell2mat(gmt_coord(:,3)) ];
     
     fid = fopen('std.dat','w');
-    for i = 1:length(std)
+    for i = 1:length(std(:,1))
         fprintf(fid,'%2.3f %3.3f %4d\n',std(i,:));
     end
     fclose(fid);
